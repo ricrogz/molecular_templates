@@ -17,14 +17,17 @@ def test_check_duplicates():
     """
     all_templates = {}
     duplicates = 0
-    for i, _, cxsmiles in load_templates():
+    for i, smiles, cxsmiles in load_templates():
         mol = Chem.MolFromSmiles(cxsmiles)
         mol_layers = RegistrationHash.GetMolLayers(mol,
                                                    enable_tautomer_hash_v2=True)
         mol_hash = RegistrationHash.GetMolHash(mol_layers)
-        if (seen_idx := all_templates.get(mol_hash, None)) is not None:
-            print(f'Template #{i} is a duplicate of line #{seen_idx}!')
+        if (seen := all_templates.get(mol_hash, None)) is not None:
+            seen_idx, seen_smiles = seen
+            print(
+                f'\nDuplicate template found:\n\t#{i} ({smiles}) is a duplicate of'
+                f'\n\t#{seen_idx} ({seen_smiles})')
             duplicates += 1
         else:
-            all_templates[mol_hash] = i
+            all_templates[mol_hash] = (i, smiles)
     assert duplicates == 0
