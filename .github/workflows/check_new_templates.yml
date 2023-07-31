@@ -3,41 +3,32 @@ on:
   pull_request:
     branches:
     - main
+    paths:
+      - templates.smi
 
 jobs:
-  setup_infrastructure:
+  Check_new_templates:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
-    - name: Check Files
-      run: vdir
     - name: Set up Python & RDKit
       uses: mamba-org/setup-micromamba@v1
       with:
         micromamba-version: 'latest'
         environment-file: environment.yml
         generate-run-shell: true
-        init-shell: bash
         cache-environment: true
         post-cleanup: 'none'
-
-  check_new_templates:
-    needs: [setup_infrastructure]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Run basic tests
+    - name: Run basic checks
       run: pytest -n=auto tests/test_requisites.py
-      shell: bash -el {0}
+      shell: micromamba-shell {0}
     - name: Run check for duplicates
       run: pytest -n=auto tests/test_duplicates.py
-      shell: bash -el {0}
-
-  post_images:
-    needs: [check_new_templates]
-    runs-on: ubuntu-latest
-    steps:
+      shell: micromamba-shell {0}
     - name: Run image generation
       run: echo TBD
+      shell: micromamba-shell {0}
     - name: Post template images to PR
       run: echo TBD
+      shell: micromamba-shell {0}
