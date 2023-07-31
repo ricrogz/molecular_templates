@@ -22,7 +22,7 @@ jobs:
     - name: Run check for duplicates
       run: pytest -n=auto tests/test_duplicates.py
 
-  post_images
+  post_images:
     needs: [check_new_templates]
     runs-on: ubuntu-latest
     - name: Run image generation
