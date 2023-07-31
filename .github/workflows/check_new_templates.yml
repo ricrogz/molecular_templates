@@ -6,6 +6,21 @@ on:
 
 jobs:
   check_new_templates:
-    runs-on: ubuntu-latest
     steps:
-      - run: echo 'Dummy action'
+    - name: Set up Python & RDKit
+      uses: mamba-org/setup-micromamba@v1
+      with:
+        micromamba-version: 'latest'
+        environment-file: environment.yml
+        init-shell: >-
+          bash
+        cache-environment: true
+        post-cleanup: 'none'
+    - name: Run basic tests
+      run: pytest -n=auto tests/test_requisites.py
+    - name: Run check for duplicates
+      run: pytest -n=auto tests/test_duplicates.py
+    - name: Run image generation
+      run: TBD
+    - name: Post template images to PR
+      run: TBD
