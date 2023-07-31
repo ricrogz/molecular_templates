@@ -5,7 +5,7 @@ on:
     - main
 
 jobs:
-  check_new_templates:
+  setup_infrastructure:
     runs-on: ubuntu-latest
     steps:
     - name: Set up Python & RDKit
@@ -17,6 +17,9 @@ jobs:
           bash
         cache-environment: true
         post-cleanup: 'none'
+  
+  check_new_templates:
+    needs: [setup_infrastructure]
     - name: Run basic tests
       run: pytest -n=auto tests/test_requisites.py
     - name: Run check for duplicates
@@ -25,6 +28,7 @@ jobs:
   post_images:
     needs: [check_new_templates]
     runs-on: ubuntu-latest
+    steps:
     - name: Run image generation
       run: TBD
     - name: Post template images to PR
