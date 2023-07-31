@@ -6,6 +6,7 @@ on:
 
 jobs:
   check_new_templates:
+    runs-on: ubuntu-latest
     steps:
     - name: Set up Python & RDKit
       uses: mamba-org/setup-micromamba@v1
@@ -20,6 +21,10 @@ jobs:
       run: pytest -n=auto tests/test_requisites.py
     - name: Run check for duplicates
       run: pytest -n=auto tests/test_duplicates.py
+
+  post_images
+    needs: [check_new_templates]
+    runs-on: ubuntu-latest
     - name: Run image generation
       run: TBD
     - name: Post template images to PR
