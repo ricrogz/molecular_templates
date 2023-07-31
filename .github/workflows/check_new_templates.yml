@@ -20,6 +20,8 @@ jobs:
   
   check_new_templates:
     needs: [setup_infrastructure]
+    runs-on: ubuntu-latest
+    steps:
     - name: Run basic tests
       run: pytest -n=auto tests/test_requisites.py
     - name: Run check for duplicates
