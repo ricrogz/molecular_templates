@@ -1,0 +1,11 @@
+name: Contributed template check
+on:
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  check_new_templates:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Dummy action'
