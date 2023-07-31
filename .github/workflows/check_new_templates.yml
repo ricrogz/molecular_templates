@@ -17,25 +17,27 @@ jobs:
       with:
         micromamba-version: 'latest'
         environment-file: environment.yml
-        init-shell: >-
-          bash
+        generate-run-shell: true
+        init-shell: bash
         cache-environment: true
         post-cleanup: 'none'
-  
+
   check_new_templates:
     needs: [setup_infrastructure]
     runs-on: ubuntu-latest
     steps:
     - name: Run basic tests
       run: pytest -n=auto tests/test_requisites.py
+      shell: bash -el {0}
     - name: Run check for duplicates
       run: pytest -n=auto tests/test_duplicates.py
-  
+      shell: bash -el {0}
+
   post_images:
     needs: [check_new_templates]
     runs-on: ubuntu-latest
     steps:
     - name: Run image generation
-      run: TBD
+      run: echo TBD
     - name: Post template images to PR
-      run: TBD
+      run: echo TBD
