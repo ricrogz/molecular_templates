@@ -1,25 +1,27 @@
 import os
-import git
-import json
 import sys
 import tempfile
 
+import git
 from rdkit import Chem
-from rdkit.Chem.Draw import MolDraw2DSVG
+from rdkit.Chem.Draw import MolToImage
 
 img_width = 400
 img_height = 400
+templates_file = 'templates.smi'
 
 
 def get_new_templates(base_commit_hash):
     """
     Finds the new templates that have been added since the base_commit
     """
-    template_file = 'templates.smi'
+
+    with open(templates_file) as f:
+        line_nums = {line.strip(): i for i, line in enumerate(f, 1)}
 
     repo = git.Repo('.')
     base_commit = repo.commit(base_commit_hash)
-    tpl_file_diff = repo.git.diff(base_commit, repo.head, template_file)
+    tpl_file_diff = repo.git.diff(base_commit, repo.head, templates_file)
 
     # Make sure we only generate images for things that have been added,
     # not those we moved around or changed by adding a new line at the end
@@ -35,11 +37,9 @@ def get_new_templates(base_commit_hash):
         elif line.startswith('+') and (cxsmiles := line[1:].strip()):
             added.append(cxsmiles)
 
-    change_id = 0
     for cxsmiles in added:
         if cxsmiles not in removed:
-            yield change_id, cxsmiles
-            change_id += 1
+            yield line_nums[cxsmiles], cxsmiles
 
 
 def draw_mol(cxsmiles, idx, output_dir='.'):
@@ -49,23 +49,18 @@ def draw_mol(cxsmiles, idx, output_dir='.'):
     if not mol.GetNumConformers():
         raise ValueError("SMILES must include coordinates")
 
-    print(f'Creating SVG image #{idx} for SMILES "{smiles}"')
+    print(f'Creating PNG image #{idx} for SMILES "{smiles}"')
 
-    drawer = MolDraw2DSVG(img_width, img_height)
-    drawer.DrawMolecule(mol, legend=legend)
-    drawer.FinishDrawing()
-    fname = os.path.join(output_dir, f'{idx}.svg')
-    with open(fname, 'w') as f:
-        f.write(drawer.GetDrawingText())
-
+    fname = os.path.join(output_dir, f'{idx}.png')
+    png = MolToImage(mol, size=(img_width, img_height), legend=legend)
+    png.save(fname)
     return fname
 
 
-def export_generated_imgs(fnames):
+def export_generated_imgs(tmpdir):
     if gh_output := os.environ.get('GITHUB_OUTPUT', ''):
-        json_list = json.dumps(fnames)
         with open(gh_output, 'a') as f:
-            f.write(f'imgs={json_list}')
+            f.write(f'img_path={tmpdir}')
 
 
 def main(args):
@@ -84,7 +79,7 @@ def main(args):
         count += 1
 
     print(f'Wrote {count} images to path {tmpdir}')
-    export_generated_imgs(exported_files)
+    export_generated_imgs(tmpdir)
 
 
 if __name__ == '__main__':

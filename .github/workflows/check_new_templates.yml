@@ -23,14 +23,38 @@ jobs:
         cache-environment: true
         post-cleanup: 'none'
     - name: Run basic checks
+      if: success()
       run: pytest -n=auto checks/test_requisites.py
       shell: micromamba-shell {0}
     - name: Run check for duplicates
+      if: success()
       run: pytest -sv checks/test_duplicates.py
       shell: micromamba-shell {0}
     - name: Run image generation
+      id: img-gen
+      if: success()
       run: python3 src/img_generation.py ${{ github.event.pull_request.base.sha }}
       shell: micromamba-shell {0}
-    - name: Post template images to PR
-      run: echo TBD
-      shell: micromamba-shell {0}
+    - name: Upload images
+      id: imgur_upload
+      if: success()
+      uses: devicons/public-upload-to-imgur@v2.2.2
+      with:
+        path: ${{ steps.img-gen.outputs.img_path }}
+        client_id: ${{ secrets.IMGUR_CLIENT_ID }}
+    - name: Comment on the PR about the result
+      if: success()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          urls = ${{ steps.imgur_upload.outputs.markdown_urls }}
+          imgs = ""
+          for (const url of urls) {
+            imgs += url + " "
+          }
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: imgs
+          })
