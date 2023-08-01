@@ -58,6 +58,13 @@ def draw_mol(cxsmiles, idx, output_dir='.'):
     return fpath, legend
 
 
+def export_image_urls(template_imgs):
+    if gh_output := os.environ.get('GITHUB_OUTPUT', ''):
+        markdown_imgs = [f'![{title}]({url})' for url, title in template_imgs]
+        with open(gh_output, 'a') as f:
+            f.write(f"template_imgs=\"{''.join(markdown_imgs)}\"")
+
+
 def main():
     base_sha = os.environ.get('GH_PR_BASE', None)
     if not base_sha:
@@ -70,9 +77,10 @@ def main():
     with tempfile.TemporaryDirectory() as tmpdir:
         for idx, cxsmiles in get_new_templates(base_sha):
             fpath, title = draw_mol(cxsmiles, idx, tmpdir)
-            img_url = upload_img(fpath, title)
-            template_imgs.append(img_url)
+            img_url, title = upload_img(fpath, title)
+            template_imgs.append((img_url, title))
 
+    export_image_urls(template_imgs)
     print(f'{len(template_imgs)} images generated and uploaded')
 
 

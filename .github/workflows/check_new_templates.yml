@@ -6,6 +6,9 @@ on:
     paths:
       - templates.smi
 
+permissions:
+  pull-requests: write
+
 jobs:
   Check_new_templates:
     runs-on: ubuntu-latest
@@ -35,22 +38,16 @@ jobs:
       if: success()
       env:
         GH_PR_BASE: ${{ github.event.pull_request.base.sha }}
-        IMGUR_ACCESS_TOKEN:  ${{ secrets.IMGUR_ACCESS_TOKEN }}
         IMGUR_CLIENT_ID: ${{ secrets.IMGUR_CLIENT_ID }}
-        IMGUR_CLIENT_SECRET: ${{ secrets.IMGUR_CLIENT_SECRET }}
-        IMGUR_REFRESH_TOKEN: ${{ secrets.IMGUR_REFRESH_TOKEN }}
+        IMGUR_TOKEN: ${{ secrets.IMGUR_TOKEN }}
       run: python3 src/img_generation.py
       shell: micromamba-shell {0}
-    - name: Comment on the PR about the result
+    - name: Post images in PR
       if: success()
       uses: actions/github-script@v6
       with:
         script: |
-          urls = ${{ steps.imgur_upload.outputs.markdown_urls }}
-          imgs = ""
-          for (const url of urls) {
-            imgs += url + " "
-          }
+          imgs = ${{ steps.img-gen.outputs.template_imgs }}
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,

@@ -1,6 +1,3 @@
-import pytest
-
-
 def load_templates():
     with open("templates.smi") as f:
         for i, line in enumerate(f, 1):

@@ -7,4 +7,4 @@ dependencies:
   - pytest
   - pytest-xdist
   - rdkit>=2023.03.1
-  - requests_oauthlib
+  - requests-oauthlib
