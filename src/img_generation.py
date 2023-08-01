@@ -5,7 +5,7 @@ import sys
 import tempfile
 
 from rdkit import Chem
-from rdkit.Chem.Draw import MolDraw2DSVG
+from rdkit.Chem.Draw import MolToImage
 
 img_width = 400
 img_height = 400
@@ -49,15 +49,11 @@ def draw_mol(cxsmiles, idx, output_dir='.'):
     if not mol.GetNumConformers():
         raise ValueError("SMILES must include coordinates")
 
-    print(f'Creating SVG image #{idx} for SMILES "{smiles}"')
+    print(f'Creating PNG image #{idx} for SMILES "{smiles}"')
 
-    drawer = MolDraw2DSVG(img_width, img_height)
-    drawer.DrawMolecule(mol, legend=legend)
-    drawer.FinishDrawing()
-    fname = os.path.join(output_dir, f'{idx}.svg')
-    with open(fname, 'w') as f:
-        f.write(drawer.GetDrawingText())
-
+    fname = os.path.join(output_dir, f'{idx}.png')
+    png = MolToImage(mol, size=(img_width, img_height), legend=legend)
+    png.save(fname)
     return fname
 
 
