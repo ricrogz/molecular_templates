@@ -29,7 +29,7 @@ def upload_img(fpath, title):
                                 'client_id': IMGUR_CLIENT_ID,
                                 'client_secret': IMGUR_CLIENT_SECRET
                             },
-                            token_updater=print)
+                            token_updater=export_imgur_token)
 
     img = b64encode(open(fpath, 'rb').read())
     fname = os.path.basename(fpath)

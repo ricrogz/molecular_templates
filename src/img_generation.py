@@ -5,7 +5,7 @@ import git
 from rdkit import Chem
 from rdkit.Chem.Draw import MolToImage
 
-from img_upload import upload_img
+from imgur_upload import upload_img
 
 img_width = 400
 img_height = 400
