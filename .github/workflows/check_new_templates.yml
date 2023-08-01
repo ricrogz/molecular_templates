@@ -30,18 +30,17 @@ jobs:
       if: success()
       run: pytest -sv checks/test_duplicates.py
       shell: micromamba-shell {0}
-    - name: Run image generation
+    - name: Run image generation and upload
       id: img-gen
       if: success()
-      run: python3 src/img_generation.py ${{ github.event.pull_request.base.sha }}
+      env:
+        GH_PR_BASE: ${{ github.event.pull_request.base.sha }}
+        IMGUR_ACCESS_TOKEN:  ${{ secrets.IMGUR_ACCESS_TOKEN }}
+        IMGUR_CLIENT_ID: ${{ secrets.IMGUR_CLIENT_ID }}
+        IMGUR_CLIENT_SECRET: ${{ secrets.IMGUR_CLIENT_SECRET }}
+        IMGUR_REFRESH_TOKEN: ${{ secrets.IMGUR_REFRESH_TOKEN }}
+      run: python3 src/img_generation.py
       shell: micromamba-shell {0}
-    - name: Upload images
-      id: imgur_upload
-      if: success()
-      uses: devicons/public-upload-to-imgur@v2.2.2
-      with:
-        path: ${{ steps.img-gen.outputs.img_path }}
-        client_id: ${{ secrets.IMGUR_CLIENT_ID }}
     - name: Comment on the PR about the result
       if: success()
       uses: actions/github-script@v6

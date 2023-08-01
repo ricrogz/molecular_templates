@@ -1,10 +1,11 @@
 import os
-import sys
 import tempfile
 
 import git
 from rdkit import Chem
 from rdkit.Chem.Draw import MolToImage
+
+from img_upload import upload_img
 
 img_width = 400
 img_height = 400
@@ -51,36 +52,29 @@ def draw_mol(cxsmiles, idx, output_dir='.'):
 
     print(f'Creating PNG image #{idx} for SMILES "{smiles}"')
 
-    fname = os.path.join(output_dir, f'{idx}.png')
+    fpath = os.path.join(output_dir, f'{idx}.png')
     png = MolToImage(mol, size=(img_width, img_height), legend=legend)
-    png.save(fname)
-    return fname
+    png.save(fpath)
+    return fpath, legend
 
 
-def export_generated_imgs(tmpdir):
-    if gh_output := os.environ.get('GITHUB_OUTPUT', ''):
-        with open(gh_output, 'a') as f:
-            f.write(f'img_path={tmpdir}')
-
-
-def main(args):
-    if len(args) < 2:
-        print(f'Usage {__file__} [base commit hash]')
+def main():
+    base_sha = os.environ.get('GH_PR_BASE', None)
+    if not base_sha:
+        print(
+            "The base commit hash must be provided via the GH_PR_BASE env var")
         exit(1)
+    print(f'Differencing with sha {base_sha}')
 
-    print(f'Differencing with sha {args[1]}')
+    template_imgs = []
+    with tempfile.TemporaryDirectory() as tmpdir:
+        for idx, cxsmiles in get_new_templates(base_sha):
+            fpath, title = draw_mol(cxsmiles, idx, tmpdir)
+            img_url = upload_img(fpath, title)
+            template_imgs.append(img_url)
 
-    count = 0
-    exported_files = []
-    tmpdir = tempfile.mkdtemp()
-    for idx, new_template in get_new_templates(args[1]):
-        fname = draw_mol(new_template, idx, tmpdir)
-        exported_files.append(fname)
-        count += 1
-
-    print(f'Wrote {count} images to path {tmpdir}')
-    export_generated_imgs(tmpdir)
+    print(f'{len(template_imgs)} images generated and uploaded')
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
