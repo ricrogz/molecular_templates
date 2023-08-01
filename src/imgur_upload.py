@@ -4,7 +4,7 @@ from base64 import b64encode
 
 from requests_oauthlib import OAuth2Session, TokenUpdated
 
-ALBUM_HASH = 'Eo6pEWB'
+ALBUM_HASH = ''
 IMGUR_UPLOAD_URL = "https://api.imgur.com/3/upload.json"
 UPLOAD_RETRIES = 5
 
