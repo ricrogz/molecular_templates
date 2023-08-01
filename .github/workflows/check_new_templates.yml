@@ -23,10 +23,10 @@ jobs:
         cache-environment: true
         post-cleanup: 'none'
     - name: Run basic checks
-      run: pytest -n=auto tests/test_requisites.py
+      run: pytest -n=auto checks/test_requisites.py
       shell: micromamba-shell {0}
     - name: Run check for duplicates
-      run: pytest -sv tests/test_duplicates.py
+      run: pytest -sv checks/test_duplicates.py
       shell: micromamba-shell {0}
     - name: Run image generation
       run: python3 src/img_generation.py ${{ github.event.pull_request.base.sha }}
