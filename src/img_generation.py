@@ -3,7 +3,7 @@ import tempfile
 
 import git
 from rdkit import Chem
-from rdkit.Chem.Draw import MolToImage
+from rdkit.Chem.Draw import MolDraw2DSVG, MolToImage
 
 from imgur_upload import upload_img
 
@@ -43,7 +43,7 @@ def get_new_templates(base_commit_hash):
             yield line_nums[cxsmiles], cxsmiles
 
 
-def draw_mol(cxsmiles, idx, output_dir='.'):
+def draw_png(cxsmiles, idx, output_dir='.'):
     smiles = cxsmiles.split()[0]
     legend = f"#{idx} {smiles}"
     mol = Chem.MolFromSmiles(cxsmiles)
@@ -56,6 +56,22 @@ def draw_mol(cxsmiles, idx, output_dir='.'):
     png = MolToImage(mol, size=(img_width, img_height), legend=legend)
     png.save(fpath)
     return fpath, legend
+
+def draw_svg(cxsmiles, fname, legend):
+    mol = Chem.MolFromSmiles(cxsmiles)
+    if not mol.GetNumConformers():
+        raise ValueError("SMILES must include coordinates")
+
+    print(f'Creating SVG image {legend}: {fname}')
+
+    drawer = MolDraw2DSVG(img_width, img_height)
+    drawer.DrawMolecule(mol, legend=legend)
+    drawer.FinishDrawing()
+
+    with open(fname, 'w') as f:
+        f.write(drawer.GetDrawingText())
+
+
 
 
 def export_image_urls(template_imgs):
@@ -76,7 +92,7 @@ def main():
     template_imgs = []
     with tempfile.TemporaryDirectory() as tmpdir:
         for idx, cxsmiles in get_new_templates(base_sha):
-            fpath, title = draw_mol(cxsmiles, idx, tmpdir)
+            fpath, title = draw_png(cxsmiles, idx, tmpdir)
             img_url, title = upload_img(fpath, title)
             template_imgs.append((img_url, title))
 
