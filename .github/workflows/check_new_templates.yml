@@ -1,0 +1,56 @@
+name: Contributed template check
+on:
+  pull_request:
+    branches:
+    - main
+    paths:
+      - templates.smi
+
+permissions:
+  pull-requests: write
+
+jobs:
+  Check_new_templates:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Set up Python & RDKit
+      uses: mamba-org/setup-micromamba@v1
+      with:
+        micromamba-version: 'latest'
+        environment-file: environment.yml
+        generate-run-shell: true
+        cache-environment: true
+        post-cleanup: 'none'
+    - name: Run basic checks
+      if: success()
+      run: pytest -n=auto checks/test_requisites.py
+      shell: micromamba-shell {0}
+    - name: Run check for duplicates
+      if: success()
+      run: pytest -sv checks/test_duplicates.py
+      shell: micromamba-shell {0}
+    - name: Run image generation and upload
+      id: img-gen
+      if: success()
+      env:
+        GH_PR_BASE: ${{ github.event.pull_request.base.sha }}
+        IMGUR_CLIENT_ID: ${{ secrets.IMGUR_CLIENT_ID }}
+        IMGUR_TOKEN: ${{ secrets.IMGUR_TOKEN }}
+      run: python3 src/img_generation.py
+      shell: micromamba-shell {0}
+    - name: Post images in PR
+      if: success()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          imgs = ${{ steps.img-gen.outputs.template_imgs }}
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: imgs
+          })
