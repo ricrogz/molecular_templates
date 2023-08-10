@@ -4,7 +4,7 @@ on:
   workflow_call: ~
   push:
     branches:
-    - main
+    - header_generator_example
     paths:
       - templates.smi
 
@@ -59,7 +59,7 @@ jobs:
               git config user.name "github-actions[bot]"
               git config user.email "github-actions[bot]@noreply.github.com"
 
-              git checkout main
+              git checkout header_generator_example
               git pull
 
               git add ${{ env.tpl_hdr }} ${{ env.gallery_file }} ${{ env.img_dir }}
