@@ -53,8 +53,8 @@ def draw_svg(cxsmiles, fname, legend):
 def generate_gallery(templates):
     with open(GALLERY_FILE, 'w') as f:
         f.write('# Templates\n\n')
-        for smiles, _, md in templates:
-            f.write(f'![{smiles}]({md})')
+        for _, _, md in templates:
+            f.write(md)
 
 
 def clean_up_imgs(templates):
