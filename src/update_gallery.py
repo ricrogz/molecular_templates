@@ -2,13 +2,16 @@ import glob
 import hashlib
 import os
 
-from img_generation import draw_svg
+from rdkit import Chem
+from rdkit.Chem.Draw import MolDraw2DSVG
 
-gallery_file = 'gallery.md'
-img_dir = "img"
-img_width = 400
-img_height = 400
-tpl_file = 'templates.smi'
+GALLERY_FILE = os.environ.get('GALLERY_FILE', 'gallery.md')
+IMG_DIR = os.environ.get('IMG_DIR', 'img')
+TPL_FILE = os.environ.get('TPL_FILE', 'templates.smi')
+BASE_SHA = os.environ.get('GH_PR_BASE', 'main')
+REPO_URL = os.environ.get('GH_REPO_URL', 'main')
+
+IMG_SIZE = (400, 400)
 
 
 def get_hash(s):
@@ -16,40 +19,76 @@ def get_hash(s):
     return hashlib.sha256(data).hexdigest()
 
 
-def get_new_templates():
-    with open(tpl_file, 'r') as f:
+def get_all_templates():
+    with open(TPL_FILE, 'r') as f:
         for i, line in enumerate(f, 1):
             yield i, line.strip()
 
 
+def get_img_markdown(legend, fname):
+    """
+    Return 2 markdown strings for the image:
+    - one for the PR comment, with a full url to the fork that originated the PR
+    - one for the gallery, with a relative url to the main repo
+    """
+    return f'![{legend}]({fname})', f'![{legend}]({REPO_URL}/{fname})'
+
+
+def draw_svg(cxsmiles, fname, legend):
+    mol = Chem.MolFromSmiles(cxsmiles)
+    if not mol.GetNumConformers():
+        raise ValueError("SMILES must include coordinates")
+
+    print(f'Creating SVG image {legend}: {fname}')
+
+    drawer = MolDraw2DSVG(*IMG_SIZE)
+    drawer.DrawMolecule(mol, legend=legend)
+    drawer.FinishDrawing()
+
+    with open(fname, 'w') as f:
+        f.write(drawer.GetDrawingText())
+
+
 def generate_gallery(templates):
-    with open(gallery_file, 'w') as f:
+    with open(GALLERY_FILE, 'w') as f:
         f.write('# Templates\n\n')
-        for smiles, img in templates:
-            f.write(f'![{smiles}]({img})')
+        for smiles, _, md in templates:
+            f.write(f'![{smiles}]({md})')
 
 
 def clean_up_imgs(templates):
-    existing_imgs = set(glob.glob(os.path.join(img_dir, '*.svg')))
-    current_imgs = [img for _, img in templates]
+    existing_imgs = set(glob.glob(os.path.join(IMG_DIR, '*.svg')))
+    current_imgs = [img for _, img, _ in templates]
     for fname in existing_imgs.difference(current_imgs):
         print(f'Removing outdated SVG {fname}')
         os.remove(fname)
 
 
+def export_pr_image_urls(pr_imgs):
+    if gh_output := os.environ.get('GITHUB_OUTPUT', ''):
+        with open(gh_output, 'a') as f:
+            f.write(f"pr_images=\"{''.join(pr_imgs)}\"")
+
+
 def main():
-    os.makedirs(img_dir, exist_ok=True)
+    os.makedirs(IMG_DIR, exist_ok=True)
 
-    templates = []
-    for idx, cxsmiles in get_new_templates():
-        fname = os.path.join(img_dir, f'{get_hash(cxsmiles)}.svg')
+    pr_imgs = []
+    all_templates = []
+    for idx, cxsmiles in get_all_templates():
+        hash = get_hash(f'{idx} {cxsmiles}')
+        fname = os.path.join(IMG_DIR, f'{hash}.svg')
         smiles = cxsmiles.split()[0]
+        title = f"#{idx} {smiles}"
+        img_main_md, img_pr_md = get_img_markdown(title, fname)
         if not os.path.isfile(fname):
-            draw_svg(cxsmiles, fname, f"#{idx} {smiles}")
-        templates.append((smiles, fname))
+            pr_imgs.append(img_pr_md)
+            draw_svg(cxsmiles, fname, title)
+        all_templates.append((smiles, fname, img_main_md))
 
-    generate_gallery(templates)
-    clean_up_imgs(templates)
+    generate_gallery(all_templates)
+    clean_up_imgs(all_templates)
+    export_pr_image_urls(pr_imgs)
 
 
 if __name__ == '__main__':
