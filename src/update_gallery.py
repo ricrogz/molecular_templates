@@ -6,12 +6,13 @@ from rdkit import Chem
 from rdkit.Chem.Draw import MolDraw2DSVG
 
 GALLERY_FILE = os.environ.get('GALLERY_FILE', 'gallery.md')
+GH_PR_REPO = os.environ.get('GH_PR_REPO', 'pr_repo')
+GH_PR_BRANCH = os.environ.get('GH_PR_BRANCH', 'pr_branch')
 IMG_DIR = os.environ.get('IMG_DIR', 'img')
-TPL_FILE = os.environ.get('TPL_FILE', 'templates.smi')
-BASE_SHA = os.environ.get('GH_PR_BASE', 'main')
-REPO_URL = os.environ.get('GH_REPO_URL', 'main')
-
 IMG_SIZE = (400, 400)
+TPL_FILE = os.environ.get('TPL_FILE', 'templates.smi')
+
+GH_RAW_FILE_URL_BASE = f'https://raw.githubusercontent.com/{GH_PR_REPO}/{GH_PR_BRANCH}'
 
 
 def get_hash(s):
@@ -31,7 +32,7 @@ def get_img_markdown(legend, fname):
     - one for the PR comment, with a full url to the fork that originated the PR
     - one for the gallery, with a relative url to the main repo
     """
-    return f'![{legend}]({fname})', f'![{legend}]({REPO_URL}/{fname})'
+    return f'![{legend}]({fname})', f'![{legend}]({GH_RAW_FILE_URL_BASE}/{fname})'
 
 
 def draw_svg(cxsmiles, fname, legend):
@@ -52,8 +53,8 @@ def draw_svg(cxsmiles, fname, legend):
 def generate_gallery(templates):
     with open(GALLERY_FILE, 'w') as f:
         f.write('# Templates\n\n')
-        for smiles, _, md in templates:
-            f.write(f'![{smiles}]({md})')
+        for _, _, md in templates:
+            f.write(md)
 
 
 def clean_up_imgs(templates):

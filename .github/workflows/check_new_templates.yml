@@ -9,6 +9,8 @@ on:
       - templates.smi
 
 permissions:
+  contents: write
+  issues: write
   pull-requests: write
 
 env:
@@ -51,6 +53,7 @@ jobs:
       id: header-gen
       if: success()
       run: python3 src/header_generation.py
+      shell: micromamba-shell {0}
 
     - name: Test the header file
       if: ${{ steps.header-gen.outputs.header_changed == 'true' && success() }}
@@ -61,8 +64,8 @@ jobs:
       id: img-gen
       if: ${{ steps.header-gen.outputs.header_changed == 'true' && success() }}
       env:
-        GH_PR_BASE: ${{ github.event.pull_request.base.sha }}`
-        GH_REPO_URL: ${{ github.repositoryUrl }}
+        GH_PR_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        GH_PR_BRANCH: ${{ github.event.pull_request.head.ref }}
       run: python3 src/update_gallery.py
       shell: micromamba-shell {0}
 
@@ -73,7 +76,7 @@ jobs:
               git config user.name "github-actions[bot]"
               git config user.email "github-actions[bot]@noreply.github.com"
 
-              git diff
+              git checkout ${{ github.head_ref }} --
 
               git add ${{ env.TPL_HDR }} ${{ env.GALLERY_FILE }} ${{ env.IMG_DIR }}
 
@@ -89,7 +92,7 @@ jobs:
           fi
 
     - name: Post images in PR
-      if: success()
+      if: ${{ steps.header-gen.outputs.header_changed == 'true' && success() }}
       uses: actions/github-script@v6
       with:
         script: |
@@ -99,4 +102,29 @@ jobs:
             owner: context.repo.owner,
             repo: context.repo.repo,
             body: imgs
+          })
+
+    - name: Update PR with no changes
+      if: ${{ steps.header-gen.outputs.header_changed != 'true' && success() }}
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: "No new templates were added."
+          })
+
+    - name: Update PR with error msg
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          run_url = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: "Something went wrong, please check " + run_url + " for more information."
           })
