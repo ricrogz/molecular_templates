@@ -12,7 +12,7 @@ img_height = 400
 templates_file = 'templates.smi'
 
 
-def get_new_templates(base_commit_hash):
+def get_new_templates():
     """
     Finds the new templates that have been added since the base_commit
     """
@@ -21,8 +21,7 @@ def get_new_templates(base_commit_hash):
         line_nums = {line.strip(): i for i, line in enumerate(f, 1)}
 
     repo = git.Repo('.')
-    base_commit = repo.commit(base_commit_hash)
-    tpl_file_diff = repo.git.diff(base_commit, repo.head, templates_file)
+    tpl_file_diff = repo.git.diff('--', templates_file)
 
     # Make sure we only generate images for things that have been added,
     # not those we moved around or changed by adding a new line at the end
@@ -66,16 +65,9 @@ def export_image_urls(template_imgs):
 
 
 def main():
-    base_sha = os.environ.get('GH_PR_BASE', None)
-    if not base_sha:
-        print(
-            "The base commit hash must be provided via the GH_PR_BASE env var")
-        exit(1)
-    print(f'Differencing with sha {base_sha}')
-
     template_imgs = []
     with tempfile.TemporaryDirectory() as tmpdir:
-        for idx, cxsmiles in get_new_templates(base_sha):
+        for idx, cxsmiles in get_new_templates():
             fpath, title = draw_mol(cxsmiles, idx, tmpdir)
             img_url, title = upload_img(fpath, title)
             template_imgs.append((img_url, title))
