@@ -127,10 +127,10 @@ def mark_inner_atoms(smiles):
         if aidx in inner_atoms:
             # this atom cannot have substituents, so we substitute it with a query with a fixed degree
             atom = mol.GetAtomWithIdx(aidx)
-            query_atom = Chem.AtomFromSmarts(f"[#4&D{atom.GetDegree()}]")
+            query_atom = Chem.AtomFromSmarts(f"[#0&D{atom.GetDegree()}]")
             mol.ReplaceAtom(aidx, query_atom)
 
-    return Chem.MolToCXSmiles(mol)
+    return Chem.MolToCXSmarts(mol)
 
 def generate_header(generated_header_path):
     with open(generated_header_path, 'w') as f_out:
