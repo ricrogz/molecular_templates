@@ -31,17 +31,9 @@ HEADER_TEXT = """//
 const std::vector<std::string> TEMPLATE_SMILES = {
 """
 
-
 def clean_smiles(template_smiles):
-    """
-    Translate all atoms into dummy atoms so that templates are not atom-specific.
-    """
     template = Chem.MolFromSmiles(template_smiles)
-    for atom in template.GetAtoms():
-        atom.SetAtomicNum(0)
-
-    # TO_DO: replace bonds with query bonds
-
+        # TO_DO: replace bonds with query bonds
     return Chem.MolToCXSmiles(template)
 
 
@@ -123,12 +115,15 @@ def mark_inner_atoms(smiles):
                 inner_atoms.add(atom.GetIdx())
                 break
 
+    DUMMY_ATOMIC_NUM = 200
     for aidx in range(mol.GetNumAtoms()):
+        atom = mol.GetAtomWithIdx(aidx)
+        query = f"[!#{DUMMY_ATOMIC_NUM}]"  # query for any atom except the dummy atom
         if aidx in inner_atoms:
-            # this atom cannot have substituents, so we substitute it with a query with a fixed degree
-            atom = mol.GetAtomWithIdx(aidx)
-            query_atom = Chem.AtomFromSmarts(f"[#0&D{atom.GetDegree()}]")
-            mol.ReplaceAtom(aidx, query_atom)
+             # this atom cannot have substituents, so we also add a fixed degree to the query
+            query = f"[!#{DUMMY_ATOMIC_NUM}&D{atom.GetDegree()}]"
+        query_atom = Chem.AtomFromSmarts(query)
+        mol.ReplaceAtom(aidx, query_atom)
 
     return Chem.MolToCXSmarts(mol)
 
@@ -140,8 +135,7 @@ def generate_header(generated_header_path):
                 if not (cxsmiles := line.strip()):
                     continue
 
-                # TO_DO: Clean smiles to make them atom-type and bond-type agnostic
-                cxsmiles = clean_smiles(cxsmiles)
+              #  cxsmiles = clean_smiles(cxsmiles)
                 cxsmiles = mark_inner_atoms(cxsmiles)
 
                 f_out.write(f'    "{cxsmiles}",\n')
