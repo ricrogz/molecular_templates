@@ -41,7 +41,7 @@ def clean_smiles(template_smiles):
 
 def crossing(v1pt1, v1pt2, v2pt1, v2pt2):
     # Convert vector 1 to a line (line 1) of infinite length.
-    # We want the line in linear equation standard form: A*x + B*y # C = 0
+    # We want the line in linear equation standard form: A*x + B*y + C = 0
     # See: http://en.wikipedia.org/wiki/Linear_equation
     a1 = v1pt2.y - v1pt1.y
     b1 = v1pt1.x - v1pt2.x
