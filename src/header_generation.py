@@ -31,13 +31,6 @@ HEADER_TEXT = """//
 const std::vector<std::string> TEMPLATE_SMILES = {
 """
 
-def clean_smiles(template_smiles):
-    template = Chem.MolFromSmiles(template_smiles)
-        # TO_DO: replace bonds with query bonds
-    return Chem.MolToCXSmiles(template)
-
-
-
 
 def crossing(v1pt1, v1pt2, v2pt1, v2pt2):
     # Convert vector 1 to a line (line 1) of infinite length.
@@ -71,6 +64,7 @@ def crossing(v1pt1, v1pt2, v2pt1, v2pt2):
     # If they are not collinear, they must intersect in exactly one point.
     return True
 
+
 def point_inside_ring(pt, coords, ring):
     # Check if a point is inside a ring
     min_pt = Geometry.Point2D(1e8, 1e8)
@@ -88,11 +82,14 @@ def point_inside_ring(pt, coords, ring):
     outside_x = min_pt.x - 0.1
     intersections = 0
     for i in range(len(ring)):
-        p1 = Geometry.Point2D (coords[ring[i]][0], coords[ring[i]][1])
-        p2 = Geometry.Point2D (coords[ring[(i + 1) % len(ring)]][0], coords[ring[(i + 1) % len(ring)]][1])
-        if crossing(p1, p2, pt, Geometry.Point2D(outside_x, pt.y)) and pt.y != p2.y:
+        p1 = Geometry.Point2D(coords[ring[i]][0], coords[ring[i]][1])
+        p2 = Geometry.Point2D(coords[ring[(i + 1) % len(ring)]][0],
+                              coords[ring[(i + 1) % len(ring)]][1])
+        if crossing(p1, p2, pt, Geometry.Point2D(outside_x,
+                                                 pt.y)) and pt.y != p2.y:
             intersections += 1
     return (intersections % 2) == 1
+
 
 def mark_inner_atoms(smiles):
     mol = Chem.MolFromSmiles(smiles)
@@ -111,7 +108,8 @@ def mark_inner_atoms(smiles):
 
         for ring in mol.GetRingInfo().AtomRings():
             # if the point is inside a ring, avoid attaching substituents to atom
-            if point_inside_ring(point, mol.GetConformer().GetPositions(), ring):
+            if point_inside_ring(point,
+                                 mol.GetConformer().GetPositions(), ring):
                 inner_atoms.add(atom.GetIdx())
                 break
 
@@ -120,12 +118,13 @@ def mark_inner_atoms(smiles):
         atom = mol.GetAtomWithIdx(aidx)
         query = f"[!#{DUMMY_ATOMIC_NUM}]"  # query for any atom except the dummy atom
         if aidx in inner_atoms:
-             # this atom cannot have substituents, so we also add a fixed degree to the query
+            # this atom cannot have substituents, so we also add a fixed degree to the query
             query = f"[!#{DUMMY_ATOMIC_NUM}&D{atom.GetDegree()}]"
         query_atom = Chem.AtomFromSmarts(query)
         mol.ReplaceAtom(aidx, query_atom)
 
     return Chem.MolToCXSmarts(mol)
+
 
 def generate_header(generated_header_path):
     with open(generated_header_path, 'w') as f_out:
@@ -135,7 +134,7 @@ def generate_header(generated_header_path):
                 if not (cxsmiles := line.strip()):
                     continue
 
-              #  cxsmiles = clean_smiles(cxsmiles)
+            # TO_DO: replace bonds with query bonds
                 cxsmiles = mark_inner_atoms(cxsmiles)
 
                 f_out.write(f'    "{cxsmiles}",\n')
