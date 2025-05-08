@@ -11,6 +11,7 @@ img_width = 400
 img_height = 400
 templates_file = 'templates.smi'
 
+# just a dummy change
 
 def get_new_templates():
     """
