@@ -71,8 +71,34 @@ jobs:
             body: "No new templates were found, so no images were generated."
           })
 
+    - name: Comment if no images generated 2
+      if: steps.img-gen.outputs.template_imgs == null
+      uses: actions/github-script@v6
+      with:
+        script: |
+          run_url = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: "No new templates were found, so no images were generated 2."
+          })
+
+    - name: Comment if no images generated 3
+      if:  toJson(steps.img-gen.outputs.template_imgs) == '{}'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          run_url = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: "No new templates were found, so no images were generated 3."
+          })
+
     - name: Post images in PR
-      if: success() &&  steps.img-gen.outputs.template_imgs  != ''
+      if: success() && steps.img-gen.outputs.template_imgs != ''
       uses: actions/github-script@v6
       with:
         script: |
