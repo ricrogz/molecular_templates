@@ -59,7 +59,7 @@ jobs:
       shell: micromamba-shell {0}
 
     - name: Comment if no images generated
-      if: success() && ${{ steps.img-gen.outputs.template_imgs }} == ""
+      if: success() && steps.img-gen.outputs.template_imgs == ''
       uses: actions/github-script@v6
       with:
         script: |
@@ -72,7 +72,7 @@ jobs:
           })
 
     - name: Post images in PR
-      if: success() && ${{ steps.img-gen.outputs.template_imgs }} != ""
+      if: success() &&  steps.img-gen.outputs.template_imgs  != ''
       uses: actions/github-script@v6
       with:
         script: |
