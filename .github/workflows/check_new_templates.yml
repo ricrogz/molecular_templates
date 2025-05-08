@@ -58,8 +58,21 @@ jobs:
       run: python3 src/img_generation.py
       shell: micromamba-shell {0}
 
+    - name: Comment if no images generated
+      if: success() && steps.img-gen.outputs.template_imgs == ''
+      uses: actions/github-script@v6
+      with:
+        script: |
+          run_url = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: "No new templates were found, so no images were generated."
+          })
+
     - name: Post images in PR
-      if: success()
+      if: success() &&  steps.img-gen.outputs.template_imgs  != ''
       uses: actions/github-script@v6
       with:
         script: |
