@@ -15,10 +15,10 @@ jobs:
     steps:
 
     - name: Checkout current molecular_templates repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6.0.2
 
     - name: Checkout templates contributed in PR
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6.0.2
       with:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         ref: ${{ github.event.pull_request.head.ref }}
@@ -31,7 +31,7 @@ jobs:
         git diff templates.smi
 
     - name: Set up Python & RDKit
-      uses: mamba-org/setup-micromamba@v2
+      uses: mamba-org/setup-micromamba@v3.0.0
       with:
         micromamba-version: 'latest'
         environment-file: environment.yml
@@ -60,7 +60,7 @@ jobs:
 
     - name: Comment if no images generated
       if: success() && steps.img-gen.outputs.template_imgs == '""'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9.0.0
       with:
         script: |
           run_url = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -73,7 +73,7 @@ jobs:
 
     - name: Post images in PR
       if: success() && steps.img-gen.outputs.template_imgs != '""'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9.0.0
       with:
         script: |
           imgs = ${{ steps.img-gen.outputs.template_imgs }}
@@ -86,7 +86,7 @@ jobs:
 
     - name: Update PR with error msg
       if: failure()
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9.0.0
       with:
         script: |
           run_url = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

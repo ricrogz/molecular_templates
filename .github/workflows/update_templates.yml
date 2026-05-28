@@ -21,9 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6.0.2
     - name: Set up Python & RDKit
-      uses: mamba-org/setup-micromamba@v2
+      uses: mamba-org/setup-micromamba@v3.0.0
       with:
         micromamba-version: 'latest'
         environment-file: environment.yml
